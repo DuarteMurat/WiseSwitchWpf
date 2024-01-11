@@ -1,5 +1,6 @@
 ﻿using System.IO.Ports;
 using System.Management;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -10,30 +11,40 @@ namespace WiseSwitchWpf
     /// </summary>
     public partial class FactoryResetSwitchPage : Page
     {
-        static SerialPort? serialPort;
+        SerialPort? serialPort;
         public FactoryResetSwitchPage()
         {
             InitializeComponent();
         }
-
-        private void ResetSwitch(object sender, RoutedEventArgs e)
+        
+        private async void ResetSwitch(object sender, RoutedEventArgs e)
         {
-            string portName = FindComPort();
-
-            if (portName == null)
+            await Task.Run(() =>
             {
-                MessageBox.Show("No compatible COM port found.");
-                // Handle the situation where no suitable COM port is detected
-                return;
-            }
-            MessageBox.Show($"Using {portName}.");
+                string portName = FindComPort();
 
-            InitializeSerialPort(portName);
+                if (portName == null)
+                {
+                    UpdateResetStatus("No compatible COM port found.");
+                    // Handle the situation where no suitable COM port is detected
+                    return;
+                }
 
-            ResetSwitch();
+                UpdateResetStatus($"Using {portName}.");
+                Thread.Sleep(1000);
+                InitializeSerialPort(portName);
+
+                ResetSwitch();
+            });
+           
+        }
+
+        private void UpdateResetStatus(string text)
+        {
+            Dispatcher.Invoke(()=> ResetStatus.Content = text);
         }
    
-        private static string FindComPort()
+        private string FindComPort()
         {
             string[] ports = SerialPort.GetPortNames();
 
@@ -47,12 +58,12 @@ namespace WiseSwitchWpf
             return null; // No compatible COM port found
         }
 
-        private static bool IsSwitchPort(string portName)
+        private bool IsSwitchPort(string portName)
         {
             ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_PnPEntity WHERE Caption LIKE '%(COM" + portName.Substring(3) + "%'");
             foreach (ManagementObject queryObj in searcher.Get())
             {
-                if (queryObj["Caption"].ToString().Contains("USB Serial Port") || queryObj["Caption"].ToString().Contains("USB"))
+                if (queryObj["Caption"].ToString().Contains("USB"))
                 {
                     return true;
                 }
@@ -60,19 +71,19 @@ namespace WiseSwitchWpf
             return false;
         }
 
-        static void InitializeSerialPort(string portName)
+        void InitializeSerialPort(string portName)
         {
             serialPort = new SerialPort(portName, 9600); // Change baud rate as needed
             serialPort.Open();
         }
 
-        static void SendCommand(string command)
+        void SendCommand(string command)
         {
             serialPort.WriteLine(command);
             Thread.Sleep(1000); // Adjust delay based on your switch's response time
         }
 
-        static void ResetSwitch()
+        void ResetSwitch()
         {
             //********************************ENABLE SWITCH*******************************************
 
@@ -90,9 +101,9 @@ namespace WiseSwitchWpf
 
             Reset();
         }
-        static void EnableSwitch()
+        void EnableSwitch()
         {
-            MessageBox.Show("Enabling switch.");
+            UpdateResetStatus("Enabling switch.");
             SendCommand("enable");
             Thread.Sleep(1000); // Wait for 1 second
             string response = serialPort.ReadExisting();
@@ -103,7 +114,7 @@ namespace WiseSwitchWpf
             }
         }
 
-        static void DeleteStartupConfig()
+        void DeleteStartupConfig()
         {
             SendCommand("show startup-config"); // Example command to retrieve the switch's version
             Thread.Sleep(100);
@@ -112,7 +123,7 @@ namespace WiseSwitchWpf
 
             if (response.Contains("not present"))
             {
-                MessageBox.Show("startup-config is missing.");
+                UpdateResetStatus("startup-config is missing.");
             }
 
             else
@@ -129,16 +140,16 @@ namespace WiseSwitchWpf
                 response = serialPort.ReadExisting();
                 if (response.Contains("not present"))
                 {
-                    MessageBox.Show("startup-config erased successfully.");
+                    UpdateResetStatus("startup-config erased successfully.");
                 }
                 else
                 {
-                    MessageBox.Show("Failed to delete startup-config");
+                    UpdateResetStatus("Failed to delete startup-config");
                 }
             }
         }
 
-        static void DeleteConfigText()
+        void DeleteConfigText()
         {
             var filenames = new string[]
             {
@@ -153,7 +164,7 @@ namespace WiseSwitchWpf
 
                 if (response.Contains("No such file or directory"))
                 {
-                    MessageBox.Show($"{filename} is missing.");
+                    UpdateResetStatus($"{filename} is missing.");
                 }
 
                 else
@@ -170,19 +181,19 @@ namespace WiseSwitchWpf
                     response = serialPort.ReadExisting();
                     if (response.Contains("No such file or directory"))
                     {
-                        MessageBox.Show($"{filename} erased successfully.");
+                        UpdateResetStatus($"{filename} erased successfully.");
                     }
                     else
                     {
-                        MessageBox.Show($"Failed to delete {filename}");
+                        UpdateResetStatus($"Failed to delete {filename}");
                     }
                 }
             }
         }
 
-        static void Reset()
+        void Reset()
         {
-            MessageBox.Show("Resetting Switch, please wait.");
+            UpdateResetStatus("Resetting Switch, please wait.");
             SendCommand("reload");
             // Wait for the switch to reset (adjust the time according to the switch's response time)
             Thread.Sleep(1000); // Wait for 1 second
@@ -196,14 +207,14 @@ namespace WiseSwitchWpf
 
             if (response.Contains("Cisco IOS Software"))
             {
-                MessageBox.Show("Switch reset successfully.");
+                UpdateResetStatus("Switch reset successfully.");
                 SendCommand("y");
                 Thread.Sleep(500); // Wait for 0.5 second
                 SendCommand("n");
             }
             else
             {
-                MessageBox.Show("Failed to reset the switch.");
+                UpdateResetStatus("Failed to reset the switch.");
             }
         }
     }

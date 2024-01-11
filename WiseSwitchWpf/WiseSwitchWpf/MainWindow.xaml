@@ -5,21 +5,67 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WiseSwitchWpf"
         mc:Ignorable="d"
-        Title="WiseSwitch" WindowState="Maximized" Height="426" Width="791">
+        Title="WiseSwitch" WindowState="Maximized" Height="1080" Width="1920" MinWidth="1920" MinHeight="1080">
     <Grid>
+        <!-- Grid is a common layout container that allows you to organize elements in rows and columns -->
         <Grid.RowDefinitions>
-            <RowDefinition Height="107*"/>
-            <RowDefinition Height="303*"/>
+            <RowDefinition Height="Auto"/>
+            <!-- Auto-sized row for a header -->
+            <RowDefinition Height="Auto"/>
+            <!-- Auto-sized row for a header -->
+            <RowDefinition Height="*" />
+            <!-- Takes up remaining space for the content -->
+            <RowDefinition Height="Auto"/>
+            <!-- Auto-sized row for a footer or other controls -->
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="237*"/>
-            <ColumnDefinition Width="554*"/>
-        </Grid.ColumnDefinitions>
-        <!-- Your existing Grid content -->
 
-        <Image Source="Images/WiseSwitchLogo.png" VerticalAlignment="Center" HorizontalAlignment="Center" Height="53" Width="227" Stretch="Fill"/>
-        <Button Content="Reset Page" Click="ResetPage" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="53,80,0,0" Height="27" Width="120" Grid.Row="1"/>
-        <Frame x:Name="mainFrame" Background="GhostWhite" NavigationUIVisibility="Hidden" Margin="16,23,16,22" RenderTransformOrigin="0.5,0.5" Grid.Column="1" Grid.Row="1">
-        </Frame>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal">
+            <Image Source="Images/WiseSwitchLogo.png" Stretch="Fill" VerticalAlignment="Top"/>
+        </StackPanel>
+
+        <!-- Content -->
+        <StackPanel Grid.Row="1" Grid.Column="1" Margin="10">
+            <!-- Add your content elements here -->
+            <TextBlock Text="Switch options" FontSize="16"/>
+            <Button Content="Reset Page" Click="ResetPage" Height="50" Width="200" HorizontalAlignment="Left"/>
+            
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="0">
+            <TreeView x:Name="SideTreeView" ItemsSource="{Binding Brands}" Width="250" Height="500">
+                <TreeView.ItemTemplate>
+                    <HierarchicalDataTemplate ItemsSource="{Binding ProductLines}">
+                        <TextBlock Text="{Binding Name}"/>
+                        <HierarchicalDataTemplate.ItemTemplate>
+                            <HierarchicalDataTemplate ItemsSource="{Binding ProductSeries}">
+                                <TextBlock Text="{Binding Name}"/>
+                                <HierarchicalDataTemplate.ItemTemplate>
+                                    <HierarchicalDataTemplate ItemsSource="{Binding SwitchModels}">
+                                        <TextBlock Text="{Binding Name}"/>
+                                    </HierarchicalDataTemplate>
+                                </HierarchicalDataTemplate.ItemTemplate>
+                            </HierarchicalDataTemplate>
+                        </HierarchicalDataTemplate.ItemTemplate>
+                    </HierarchicalDataTemplate>
+                </TreeView.ItemTemplate>
+            </TreeView>
+            <!-- Add more elements as needed -->
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Grid.Column="1">
+            <Frame  x:Name="mainFrame" NavigationUIVisibility="Hidden"/>
+            <!-- Add more elements as needed -->
+        </StackPanel>
+
+        <!-- Footer -->
+        <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" Background="#6889ae">
+            <TextBlock Text="© 2024 Wisetek" FontWeight="DemiBold" FontSize="25"/>
+        </StackPanel>
     </Grid>
 </Window>
