@@ -8,9 +8,9 @@
       d:DesignHeight="450" d:DesignWidth="800"
       Title="FactoryResetSwitchPage"
       Background="LightBlue">
-    
+
     <Grid>
-        <Button Content="Reset Switch" Click="ResetSwitch" Height="40" Width="200" Margin="300,205,300,205"></Button>
+        <Button Content="Reset Switch" Click="ResetSwitch" Height="40" Width="200" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="545,18,0,0"></Button>
         <Label x:Name="ResetStatus" Content="Waiting for a connection..." HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="20"></Label>
     </Grid>
 </Page>

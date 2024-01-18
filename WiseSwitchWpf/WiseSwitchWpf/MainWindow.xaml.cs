@@ -1,6 +1,9 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows;
 using WiseSwitchWpf.Entities;
+using WiseSwitchWpf.Services.Api;
+using WiseSwitchWpf.Services.Data;
+using WiseSwitchWpf.ViewModels;
 
 namespace WiseSwitchWpf
 {
@@ -9,53 +12,78 @@ namespace WiseSwitchWpf
     /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly DataService _dataService;
         public ObservableCollection<Brand> Brands { get; set; }
 
         public MainWindow()
         {
             InitializeComponent();
+
+            _dataService = new DataService(new ApiService());
+
             Brands = new ObservableCollection<Brand>();
-            PopulateTreeView();
-            DataContext = this; // Set the DataContext to the MainWindow instance
+
+            DataContext = new PopulateTreeViewModel();
         }
 
         private void ResetPage(object sender, RoutedEventArgs e)
         {
-            mainFrame.Navigate(new FactoryResetSwitchPage());
+            // Check if the current content of mainFrame is of type FactoryResetSwitchPage
+            if (mainFrame.Content is FactoryResetSwitchPage)
+            {
+                // Close the current page by setting content to null
+                mainFrame.Content = null;
+            }
+            else
+            {
+                // Open the FactoryResetSwitchPage if it's not already open
+                mainFrame.Navigate(new FactoryResetSwitchPage());
+            }
         }
 
-        private void PopulateTreeView()
+        private async Task PopulateTreeView()
         {
-            // Create Brand instances and add them to the Brands collection
-            Brand brand1 = new Brand { Name = "Brand1", ProductLines = new() };
-            brand1.ProductLines.Add(new ProductLine { Name = "ProductLine1", ProductSeries = new() });
-            brand1.ProductLines.First().ProductSeries.Add(new ProductSeries { Name = "ProductSeries1", SwitchModels = new() });
-            brand1.ProductLines.First().ProductSeries.First().SwitchModels.Add(new SwitchModel { Name = "SwitcModel1" });
-
-            Brand brand2 = new Brand
+            try
             {
-                Name = "Brand2",
-                ProductLines = [
-                    new ProductLine
-                    {
-                        Name = "ProductLine2",
-                        ProductSeries = new()
-                        {
-                            new ProductSeries
-                            {
-                                Name = "ProductSeries2",
-                                SwitchModels = new()
-                                {
-                                    new SwitchModel{Name = "SwitchModel2"}
-                                }
-                            }
-                        }
-                    }
-                ]
-            };
+                var response = await _dataService.GetAsync<ObservableCollection<Brand>>("api/GetAllForDesktopApp");
+                if (response.IsSuccess && response.Result is ObservableCollection<Brand> result)
+                {
+                    Brands = result;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception
+                MessageBox.Show($"An error occurred: {ex.Message}");
+            }
 
-            Brands.Add(brand1);
-            Brands.Add(brand2);
+            foreach (var brand in Brands)
+            {
+                SideTreeView.Items.Add(brand);
+            }
+        }
+
+        private void SideTreeView_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            if (e.NewValue is SwitchModel switchModel)
+            {
+                // Check if the current content of mainFrame is of type FactoryResetSwitchPage
+                if (mainFrame.Content is FactoryResetSwitchPage)
+                {
+                    // Close the current page by setting content to null
+                    mainFrame.Content = null;
+                }
+                else
+                {
+                    // Open the FactoryResetSwitchPage if it's not already open
+                    mainFrame.Navigate(new FactoryResetSwitchPage());
+                }
+            }
+        }
+
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            await PopulateTreeView();
         }
     }
 }

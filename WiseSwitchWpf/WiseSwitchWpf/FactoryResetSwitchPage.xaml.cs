@@ -1,4 +1,5 @@
-﻿using System.IO.Ports;
+﻿using System.IO;
+using System.IO.Ports;
 using System.Management;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -12,11 +13,13 @@ namespace WiseSwitchWpf
     public partial class FactoryResetSwitchPage : Page
     {
         SerialPort? serialPort;
+        private StreamWriter logStreamWriter;
+
         public FactoryResetSwitchPage()
         {
             InitializeComponent();
         }
-        
+
         private async void ResetSwitch(object sender, RoutedEventArgs e)
         {
             await Task.Run(() =>
@@ -36,7 +39,6 @@ namespace WiseSwitchWpf
 
                 ResetSwitch();
             });
-           
         }
 
         private void UpdateResetStatus(string text)
@@ -75,12 +77,39 @@ namespace WiseSwitchWpf
         {
             serialPort = new SerialPort(portName, 9600); // Change baud rate as needed
             serialPort.Open();
+
+            // Initialize the StreamWriter for logging
+            string logFileName = $"switch_logs_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+            logStreamWriter = new StreamWriter(logFileName);
         }
 
         void SendCommand(string command)
         {
             serialPort.WriteLine(command);
-            Thread.Sleep(1000); // Adjust delay based on your switch's response time
+            Thread.Sleep(1000); // Adjust this delay based on your switch's response time
+
+            // Read the response from the switch
+            Thread.Sleep(500); // Adjust this delay based on your switch's response time
+            string response = serialPort.ReadExisting();
+
+            // Save the response to the log file
+            LogResponse(command, response);
+        }
+
+        void LogResponse(string command, string response)
+        {
+            // Write the command and response to the log file
+            logStreamWriter.WriteLine($"Command: {command}");
+            if(!string.IsNullOrEmpty(response))
+            {
+                logStreamWriter.WriteLine($"Response: {response}");
+            }
+            else
+            {
+                logStreamWriter.WriteLine($"Response: <No Response>");
+            }
+            logStreamWriter.WriteLine(new string('-', 50)); // Separator for better readability
+            logStreamWriter.Flush(); // Flush the buffer to ensure data is written immediately
         }
 
         void ResetSwitch()
@@ -100,6 +129,9 @@ namespace WiseSwitchWpf
             //********************************RESET SWITCH*******************************************
 
             Reset();
+
+            // Close the log stream writer when done
+            logStreamWriter.Close();
         }
         void EnableSwitch()
         {
@@ -198,7 +230,7 @@ namespace WiseSwitchWpf
             // Wait for the switch to reset (adjust the time according to the switch's response time)
             Thread.Sleep(1000); // Wait for 1 second
             SendCommand("y");
-            Thread.Sleep(200000); // Wait for 4 mins
+            Thread.Sleep(100000); // Wait for 2 mins
                                   // Send a command to check if the switch is responsive after reset
             SendCommand("show version"); // Example command to retrieve the switch's version
 

@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:WiseSwitchWpf"
         mc:Ignorable="d"
-        Title="WiseSwitch" WindowState="Maximized" Height="1080" Width="1920" MinWidth="1920" MinHeight="1080">
+        Title="WiseSwitch" WindowState="Maximized" Height="1031" Width="1920" MinWidth="1920" MinHeight="1031"
+        Loaded="Window_Loaded">
     <Grid>
         <!-- Grid is a common layout container that allows you to organize elements in rows and columns -->
         <Grid.RowDefinitions>
@@ -38,7 +39,7 @@
         </StackPanel>
 
         <StackPanel Grid.Row="2" Grid.Column="0">
-            <TreeView x:Name="SideTreeView" ItemsSource="{Binding Brands}" Width="250" Height="500">
+            <TreeView x:Name="SideTreeView" MinWidth="200" MinHeight="500" SelectedItemChanged="SideTreeView_SelectedItemChanged" ItemsSource="{Binding Brands}" FontSize="18">
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding ProductLines}">
                         <TextBlock Text="{Binding Name}"/>
@@ -59,8 +60,9 @@
         </StackPanel>
 
         <StackPanel Grid.Row="2" Grid.Column="1">
-            <Frame  x:Name="mainFrame" NavigationUIVisibility="Hidden"/>
-            <!-- Add more elements as needed -->
+            <Frame  x:Name="mainFrame" NavigationUIVisibility="Hidden" Content="{Binding SelectedItem, ElementName=SideTreeView}">
+            </Frame>
+                <!-- Add more elements as needed -->
         </StackPanel>
 
         <!-- Footer -->
